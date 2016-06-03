@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+
+select_branch() {
+    branch=$(git branch -v | fzf --prompt="$1" --ansi --no-sort --reverse |
+        tr -s ' ' | cut -d ' ' -f 2)
+    echo "$branch"
+}
+
+if [ "$#" -eq 0 ]; then
+    old=$(select_branch '[Base Branch] > ')
+    new=$(select_branch '[Modified Branch] > ')
+else
+    old="$1"
+    new="$2"
+fi
+
+git diff --name-status --relative $old $new |
+fzf --reverse --prompt='[File] > '                                             \
+    --bind="ctrl-m:execute:(echo {} | cut -f 2 |
+            xargs -I % git diff --patience --color=always $old $new -- % |
+            less -R)"

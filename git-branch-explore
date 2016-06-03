@@ -1,0 +1,38 @@
+#!/usr/bin/env zsh
+
+while out=$(git branch -v "$@" |
+            fzf --ansi --no-sort --prompt="[branch] > " --reverse              \
+            --print-query --query="$query" --expect=ctrl-m,ctrl-b,ctrl-e,del);
+do
+    # Tokenize selection by newline
+    selection=("${(f)out}")
+
+    # Keep the query accross fzf calls
+    query="$selection[1]"
+
+    branch=$(echo "$selection[3]" | tr -s ' ' | cut -d ' ' -f 2)
+
+    case "$selection[2]" in
+        # enter or ctrl-m is just a diff
+        ctrl-m)
+            git show --patience --color=always "$branch" | less -R
+            ;;
+        # explode the diff
+        ctrl-e)
+            git diff-explore "$branch^" "$branch"
+            ;;
+        # ctrl-b checks out the branch
+        ctrl-b)
+            git checkout "$branch"
+            break
+            ;;
+        # del will delete the branch
+        del)
+            git branch -D "$branch"
+            ret=$?
+            if [ $ret -ne 0 ]; then
+                exit $ret
+            fi
+            ;;
+    esac
+done
