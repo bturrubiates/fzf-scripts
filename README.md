@@ -49,3 +49,7 @@ See table below for expected input.
 |:---------|:----------------------------------------------------------|
 | `ctrl-m` | Open the file using `xdg-open` on Linux or `open` on Mac. |
 | `del`    | Delete the file, using Gomi if available.                 |
+
+# License
+
+[MIT](LICENSE)
