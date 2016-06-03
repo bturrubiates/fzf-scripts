@@ -1,0 +1,108 @@
+#!/usr/bin/env zsh
+
+delete_file_gomi() {
+    file="$1"
+    gomi "$file"
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete $file with Gomi."
+        exit $?
+    fi
+
+    echo "Successfully deleted $file with Gomi."
+}
+
+delete_file_rm() {
+    file="$1"
+    (rm -rf "$file") &>/dev/null
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to delete $file with rm."
+        exit $?
+    fi
+
+    echo "Successfully deleted $file with rm"
+}
+
+delete_file() {
+    file="$1"
+    type "gomi" > /dev/null
+
+    if [ $? -eq 0 ]; then
+        delete_file_gomi "$file"
+    else
+        delete_file_rm "$file"
+    fi
+}
+
+handle_selection() {
+    selection="$1"
+    file="$2"
+
+    case "$selection" in
+        # Delete key deletes a file. If Gomi is available, then use Gomi.
+        del)
+            delete_file "$file"
+            ;;
+        # Enter or Ctrl-m will attempt to open the file.
+        ctrl-m)
+            # Use xdg-open on Linux and open on Mac.
+            if [[ "$OSTYPE" =~ "linux" ]]; then
+                xdg-open "$file"
+            else
+                open -n "$file"
+            fi
+            ;;
+        ctrl-c)
+            break
+            ;;
+    esac
+}
+
+delete_with_exa() {
+    while true; do
+        listing=$(exa -l -a --git --header --color=always)
+        header=$(echo "$listing" | head -n 1 | perl -pe 's/\e\[?.*?[\@-~]//g')
+
+        # Chop off everything after Name in the header, then take the length of
+        # the resulting string.
+        index="${#header%%Name*}"
+
+        out=$(echo "$listing" |
+              fzf --ansi --no-sort --prompt="[delete?] > " --reverse           \
+                  --print-query --query="$query" --header-lines=1              \
+                  --expect=del,ctrl-m,ctrl-c)
+        results_array=("${(f)out}")
+
+        query="${results_array[1]}"
+        selection="${results_array[2]}"
+        file="${results_array[3]:$index}"
+
+        handle_selection "$selection" "$file"
+    done
+}
+
+delete_with_ls() {
+    # Can't seem to find a good way to detect the filename when using ls -l
+    # on a Mac. On Linux I could always use the quote functionality, but it
+    # doesn't exist on Mac. For now just use 1 entry per line view.
+    while out=$(ls -A1 | fzf --ansi --no-sort --prompt="[delete?] > " --reverse\
+                             --print-query --query="$query"                    \
+                             --expect=del,ctrl-m,ctrl-c); do
+        results_array=("${(f)out}")
+
+        query="${results_array[1]}"
+        selection="${results_array[2]}"
+        file="${results_array[3]}"
+
+        handle_selection "$selection" "$file"
+    done
+}
+
+type "exa" > /dev/null
+if [ $? -eq 0 ]; then
+    delete_with_exa
+else
+    delete_with_ls
+fi
+
