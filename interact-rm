@@ -5,8 +5,9 @@ delete_file_gomi() {
     gomi "$file"
 
     if [ $? -ne 0 ]; then
+        ret=$?
         echo "Failed to delete $file with Gomi."
-        exit $?
+        exit $ret
     fi
 
     echo "Successfully deleted $file with Gomi."
@@ -17,8 +18,9 @@ delete_file_rm() {
     (rm -rf "$file") &>/dev/null
 
     if [ $? -ne 0 ]; then
+        ret=$?
         echo "Failed to delete $file with rm."
-        exit $?
+        exit $ret
     fi
 
     echo "Successfully deleted $file with rm"
@@ -105,4 +107,3 @@ if [ $? -eq 0 ]; then
 else
     delete_with_ls
 fi
-
