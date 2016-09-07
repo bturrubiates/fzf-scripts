@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+select_branch() {
+    echo $(git branch -v | fzf --prompt="$1" --ansi --no-sort --reverse |
+           tr -s ' ' | cut -d ' ' -f 2)
+}
+
+select_commit() {
+    echo $(git log "$2" --oneline |
+           fzf --prompt="$1" --ansi --no-sort --reverse |
+           tr -s ' ' | cut -d ' ' -f 1)
+}
+
+branch=${1:-$(select_branch '[Branch] > ')}
+
+first=$(select_commit '[Base Commit] >' "$branch")
+second=$(select_commit '[Compare Commit] >' "$branch")
+
+git diff-explore "$first" "$second"
