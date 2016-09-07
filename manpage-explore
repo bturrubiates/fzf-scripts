@@ -1,0 +1,13 @@
+#!/usr/bin/env zsh
+
+if [[ "$#" -lt 1 ]]; then
+    results=$(ag -G "man.*\.\d$" -l)
+else
+    results=$(ag -G "man.*\.\d$" -l "$1")
+fi
+
+# Get a list of the files with names of the form *man*.[0-9] that contain the
+# search term. If no term is given, list all man pages.
+echo "$results" |
+fzf --reverse --ansi --no-sort --prompt="[Man Page] > " \
+    --bind="ctrl-m:execute(man ./{})"
