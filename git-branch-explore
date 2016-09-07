@@ -19,7 +19,7 @@ do
             ;;
         # explode the diff
         ctrl-e)
-            git diff-explore "$branch^" "$branch"
+            git commit-explore "$branch"
             ;;
         # ctrl-b checks out the branch
         ctrl-b)
