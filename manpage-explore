@@ -1,13 +1,23 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
-if [[ "$#" -lt 1 ]]; then
-    results=$(ag -G "man.*\.\d$" -l)
-else
-    results=$(ag -G "man.*\.\d$" -l "$1")
-fi
-
-# Get a list of the files with names of the form *man*.[0-9] that contain the
-# search term. If no term is given, list all man pages.
-echo "$results" |
-fzf --reverse --ansi --no-sort --prompt="[Man Page] > " \
-    --bind="ctrl-m:execute(man ./{})"
+man -k . \
+    | fzf \
+        --exact \
+        --preview "echo {1} | sed 's/(.*//' | xargs man" \
+        --preview-window='left:61%' \
+        --reverse \
+        --no-hscroll \
+        --query="$1" \
+        --no-bold \
+        --prompt='$ man ' \
+        --color='prompt:4,pointer:4,hl:3,hl+:3,info:8' \
+        --bind="enter:execute(echo {1} | sed 's/(.*//' | xargs man)" \
+        --bind="ctrl-p:toggle-preview" \
+        --bind="ctrl-y:preview-up" \
+        --bind="ctrl-e:preview-down" \
+        --bind="ctrl-u:preview-page-up" \
+        --bind="ctrl-d:preview-page-down" \
+        --bind="ctrl-alt-y:page-up" \
+        --bind="ctrl-alt-e:page-down" \
+        --bind="ctrl-alt-u:half-page-up" \
+        --bind="ctrl-alt-d:half-page-down"
