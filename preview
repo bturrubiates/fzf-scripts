@@ -1,0 +1,18 @@
+#!/usr/bin/env zsh
+
+if [[ $# -ne 0 ]]; then
+	echo "$0: Preview ascii files in the current directory"
+	echo "This script expects no positional arguments"
+	exit 1
+fi
+
+find . -type f -exec file --mime-encoding {} + | grep ascii | cut -d ':' -f 1 |
+fzf --ansi                                                                    \
+    --no-sort                                                                 \
+    --reverse                                                                 \
+    --preview-window='down:85%'                                               \
+    --bind='ctrl-u:preview-page-up'                                           \
+    --bind='ctrl-d:preview-page-down'                                         \
+    --bind='ctrl-k:preview-up'                                                \
+    --bind='ctrl-j:preview-down'                                              \
+    --preview="cat {}"

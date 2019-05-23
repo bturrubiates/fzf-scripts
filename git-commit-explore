@@ -7,8 +7,13 @@ select_branch() {
 
 select_commit() {
     echo $(git log "$2" --oneline |
-           fzf --prompt="$1" --ansi --no-sort --reverse |
-           tr -s ' ' | cut -d ' ' -f 1)
+           fzf --prompt="$1" --ansi --no-sort --reverse                        \
+           --preview="echo {} | tr -s ' ' | cut -d ' ' -f 1 |                  \
+                      xargs -I % git diff --patience --color=always %^..%"     \
+           --bind="ctrl-u:preview-page-up"                                     \
+           --bind="ctrl-d:preview-page-down"                                   \
+           --bind="ctrl-k:preview-up"                                          \
+           --bind="ctrl-j:preview-down" | tr -s ' ' | cut -d ' ' -f 1)
 }
 
 branch=${1:-$(select_branch '[Branch] > ')}

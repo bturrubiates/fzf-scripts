@@ -2,7 +2,13 @@
 
 while out=$(git stash list "$@" |
             fzf --ansi --no-sort --reverse --print-query --query="$query"      \
-                --expect=ctrl-m,ctrl-b,del);
+                --expect=ctrl-a,ctrl-b,ctrl-p,del                              \
+                --bind="ctrl-u:preview-page-up"                                \
+                --bind="ctrl-d:preview-page-down"                              \
+                --bind="ctrl-k:preview-up"                                     \
+                --bind="ctrl-j:preview-down"                                   \
+                --preview="echo {} | cut -d':' -f1 | xargs git stash show -p"  \
+                --preview-window='down:85%');
 do
     # Tokenize selection by newline
     selection=("${(f)out}")
@@ -14,14 +20,20 @@ do
     reflog_selector=$(echo "$selection[3]" | cut -d ':' -f 1)
 
     case "$selection[2]" in
-        # enter or ctrl-m is just a diff
-        ctrl-m)
-            git show --patience --color=always -p "$reflog_selector" | less -R
+        # ctrl-a applies the stash to the current tree
+        ctrl-a)
+            git stash apply "$reflog_selector"
+            break
             ;;
         # ctrl-b checks out the stash as a branch
         ctrl-b)
             sha=$(echo "$selection[3]" | grep -o '[a-f0-9]\{7\}')
             git stash branch "stash-$sha" "$reflog_selector"
+            break
+            ;;
+        # ctrl-p is like ctrl-a but it drops the stash. Uses stash pop.
+        ctrl-p)
+            git stash pop "$reflog_selector"
             break
             ;;
         # del will drop the stash

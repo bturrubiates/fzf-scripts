@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Script to open files that have been modified in git.  Uses bash instead of
+# zsh because the version of zsh available to me does not support pipefail.
+#
+# Runs FZF in multi-select mode. Any parameters passed to this script will be
+# passed as an argument to git diff.
+
+set -o pipefail
+set -e
+
+find_modified() {
+    git_root=$(git rev-parse --show-toplevel)
+    git --no-pager diff --diff-filter=ACMRTU                                   \
+                        --name-only                                            \
+                        --line-prefix="${git_root}/" $GIT_OPTIONS
+}
+
+filter() {
+    fzf --prompt="[File] > "                                                   \
+        --preview-window="right:70%"                                           \
+        --preview="git diff $GIT_OPTIONS {}"                                   \
+        --bind="ctrl-d:preview-page-down"                                      \
+        --bind="ctrl-u:preview-page-up"                                        \
+        --bind="ctrl-j:preview-down"                                           \
+        --bind="ctrl-k:preview-up"                                             \
+        --reverse                                                              \
+        --multi                                                                \
+        --exit-0                                                               \
+        --select-1
+}
+
+# Stash away the options to the script. These will be passed as an argument to
+# git diff. This is mostly useful for passing in --cached.
+GIT_OPTIONS=$1
+
+files=$(find_modified | filter | xargs)
+$EDITOR $files
